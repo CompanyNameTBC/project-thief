@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System;
-
+using System.Collections;
 
 
 public class Navigation : MonoBehaviour
@@ -10,7 +10,10 @@ public class Navigation : MonoBehaviour
     public Transform goal;
     public Vector2 startingPosition;
     public Rigidbody2D rb;
-    public bool returning;
+    public int loiterTime;
+
+    private bool returning;
+    private bool waiting;
 
     // Start is called before the first frame update
     void Start() { 
@@ -19,10 +22,16 @@ public class Navigation : MonoBehaviour
         navMeshAgent.updateUpAxis = false;
         navMeshAgent.destination = goal.position;
         returning = false;
+        waiting = false;
     }
 
     private void Update()
     {
+        if (waiting)
+        {
+            return;
+        }
+
         float goalX = goal.position.x;
         float goalY = goal.position.y;
         float actX = rb.position.x;
@@ -33,13 +42,22 @@ public class Navigation : MonoBehaviour
         if (returning == false && (compare_floats(actX, goalX) && compare_floats(actY, goalY)))
         {
             returning = true;
-            navMeshAgent.SetDestination(startingPosition);
+            waiting = true;
+            StartCoroutine(Wait(startingPosition));       
         }
         else if (returning == true && (compare_floats(actX, startX) && compare_floats(actY, startY)))
         {
             returning = false;
-            navMeshAgent.SetDestination(goal.position);
+            waiting = true;
+            StartCoroutine(Wait(goal.position));
         }
+    }
+
+    IEnumerator Wait(Vector2 nextPosition)
+    {
+        yield return new WaitForSeconds(loiterTime);
+        waiting = false;
+        navMeshAgent.SetDestination(nextPosition);
     }
 
 
