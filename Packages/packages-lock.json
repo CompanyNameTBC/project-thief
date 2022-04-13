@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.h8man.2d.navmeshplus": {
+      "version": "https://github.com/h8man/NavMeshPlus.git#master",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "e0b28e4e34152564d4aa727fe36b764fd46c2022"
+    },
     "com.unity.2d.animation": {
       "version": "5.2.0",
       "depth": 0,
