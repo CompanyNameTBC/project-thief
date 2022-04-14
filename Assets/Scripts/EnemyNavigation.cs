@@ -24,7 +24,6 @@ public class EnemyNavigation : MonoBehaviour
 
     // Start is called before the first frame update
     void Start() {
-
         goals = GameObject.FindGameObjectsWithTag("enemy1Target");
         currentGoal = 0;
         startingPosition = rb.position;
@@ -40,6 +39,8 @@ public class EnemyNavigation : MonoBehaviour
 
     private void Update()
     {
+        AdjustAvatar();
+
         switch (state)
         {
             case "Pursue": Pursue();
@@ -90,7 +91,6 @@ public class EnemyNavigation : MonoBehaviour
         currentGoal = reverse ? currentGoal - 1 : currentGoal + 1;
 
         agent.SetDestination(goals[currentGoal].transform.position);
-        AdjustAvatar();
     }
 
     private void AdjustAvatar()
