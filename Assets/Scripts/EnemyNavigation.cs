@@ -16,8 +16,8 @@ public class EnemyNavigation : MonoBehaviour
     public int loiterTime;
 
     private GameObject[] goals;
-
     private int currentGoal;
+
     private String state;
     private bool waiting;
     private bool reverse;
@@ -28,9 +28,11 @@ public class EnemyNavigation : MonoBehaviour
         goals = GameObject.FindGameObjectsWithTag("enemy1Target");
         currentGoal = 0;
         startingPosition = rb.position;
+
         agent.updateRotation = false;
         agent.updateUpAxis = false;
         agent.destination = goals[currentGoal].transform.position;
+
         waiting = false;
         state = "Patrol";
         reverse = false;
@@ -38,12 +40,12 @@ public class EnemyNavigation : MonoBehaviour
 
     private void Update()
     {
-        if(state == "Patrol")
+        switch (state)
         {
-            Patrol();
-        } else if (state == "Pursue")
-        {
-            Pursue();
+            case "Pursue": Pursue();
+                break;
+            default: Patrol();
+                break;
         }
     }
 
@@ -53,24 +55,12 @@ public class EnemyNavigation : MonoBehaviour
         {
             return;
         }
-
-        if (currentGoal == -1 )
-        {
-            if (compare_coordinates(rb.position, startingPosition))
-            {
-                waiting = true;
-                StartCoroutine(Wait());
-            }
-        } else
-        {
-            GameObject destination = goals[currentGoal];
-
-            if (compare_coordinates(rb.position, destination.transform.position))
-            {
-                waiting = true;
-                StartCoroutine(Wait());
-            }
-        }
+       Vector3 goal = goals[currentGoal].transform.position; 
+       if (CompareCoordinates(rb.position, goal))
+       {
+         waiting = true;
+         StartCoroutine(Wait());
+       }  
     }
 
     void Pursue()
@@ -82,45 +72,58 @@ public class EnemyNavigation : MonoBehaviour
     {
         yield return new WaitForSeconds(loiterTime);
         waiting = false;
-        Debug.Log(currentGoal + 1 + " : " + goals.Length);
 
-        if(reverse == true)
+        if (reverse)
         {
-            if(currentGoal - 1 < 0)
+            if(currentGoal == 0)
             {
                 reverse = false;
-                currentGoal = -1;
-                agent.SetDestination(startingPosition);
-            } else
-            {
-                currentGoal -= 1;
-                agent.SetDestination(goals[currentGoal].transform.position);
-            }
-
+            } 
         } else
         {
-            if (currentGoal + 1 >= goals.Length)
+            if (currentGoal == goals.Length -1)
             {
                 reverse = true;
-                Debug.Log("Returning");
-                currentGoal -= 1;
-                agent.SetDestination(goals[currentGoal].transform.position);
             }
-            else
-            {
-                currentGoal += 1;
-                agent.SetDestination(goals[currentGoal].transform.position);
-            }
+        }
+
+        currentGoal = reverse ? currentGoal - 1 : currentGoal + 1;
+
+        agent.SetDestination(goals[currentGoal].transform.position);
+        AdjustAvatar();
+    }
+
+    private void AdjustAvatar()
+    {
+        Vector2 nextPosition = goals[currentGoal].transform.position;
+        if (gameObject.transform.position.x < nextPosition.x)
+        {
+            //Right
+            AdjustRotation(1);
+        }
+        else
+        {
+            //Left
+            AdjustRotation(-1);
         }
     }
 
-    private Boolean compare_coordinates(Vector2 vectorA, Vector2 vectorB)
+    private void AdjustRotation(int adjustment)
     {
-        return compare_floats(vectorA.x, vectorB.x) && compare_floats(vectorA.y, vectorB.y);
+        Transform t = this.gameObject.transform;
+        t.localScale = new Vector3(
+          adjustment,
+          transform.localScale.y,
+          transform.localScale.z);
+    }
+
+    private Boolean CompareCoordinates(Vector2 vectorA, Vector2 vectorB)
+    {
+        return CompareFloats(vectorA.x, vectorB.x) && CompareFloats(vectorA.y, vectorB.y);
     }
 
 
-    private Boolean compare_floats(float a, float b)
+    private Boolean CompareFloats(float a, float b)
     {
         float dif = a - b;
         return dif < 1 && dif > -1;
