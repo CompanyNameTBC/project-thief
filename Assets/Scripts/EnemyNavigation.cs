@@ -1,7 +1,7 @@
-using UnityEngine;
-using UnityEngine.AI;
 using System;
 using System.Collections;
+using UnityEngine;
+using UnityEngine.AI;
 
 
 public class EnemyNavigation : MonoBehaviour
@@ -24,7 +24,6 @@ public class EnemyNavigation : MonoBehaviour
 
     // Start is called before the first frame update
     void Start() {
-
         goals = GameObject.FindGameObjectsWithTag("enemy1Target");
         currentGoal = 0;
         startingPosition = rb.position;
@@ -40,6 +39,8 @@ public class EnemyNavigation : MonoBehaviour
 
     private void Update()
     {
+        AdjustAvatar();
+
         switch (state)
         {
             case "Pursue": Pursue();
@@ -56,10 +57,10 @@ public class EnemyNavigation : MonoBehaviour
             return;
         }
        Vector3 goal = goals[currentGoal].transform.position; 
-       if (CompareCoordinates(rb.position, goal))
+       if (CoordinatesMatch(rb.position, goal))
        {
          waiting = true;
-         StartCoroutine(Wait());
+         StartCoroutine(LoiterAndSetNextDestination());
        }  
     }
 
@@ -68,7 +69,7 @@ public class EnemyNavigation : MonoBehaviour
         agent.destination = player.position;
     }
 
-    IEnumerator Wait()
+    IEnumerator LoiterAndSetNextDestination()
     {
         yield return new WaitForSeconds(loiterTime);
         waiting = false;
@@ -90,7 +91,6 @@ public class EnemyNavigation : MonoBehaviour
         currentGoal = reverse ? currentGoal - 1 : currentGoal + 1;
 
         agent.SetDestination(goals[currentGoal].transform.position);
-        AdjustAvatar();
     }
 
     private void AdjustAvatar()
@@ -117,13 +117,13 @@ public class EnemyNavigation : MonoBehaviour
           transform.localScale.z);
     }
 
-    private Boolean CompareCoordinates(Vector2 vectorA, Vector2 vectorB)
+    private Boolean CoordinatesMatch(Vector2 vectorA, Vector2 vectorB)
     {
-        return CompareFloats(vectorA.x, vectorB.x) && CompareFloats(vectorA.y, vectorB.y);
+        return FloatsAlmostMatch(vectorA.x, vectorB.x) && FloatsAlmostMatch(vectorA.y, vectorB.y);
     }
 
 
-    private Boolean CompareFloats(float a, float b)
+    private Boolean FloatsAlmostMatch(float a, float b)
     {
         float dif = a - b;
         return dif < 1 && dif > -1;
