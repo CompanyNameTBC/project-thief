@@ -33,14 +33,12 @@ public class EnemyNavigation : MonoBehaviour
         agent.destination = goals[currentGoal].transform.position;
 
         waiting = false;
-        state = "Patrol";
+        state = "Pursue";
         reverse = false;
     }
 
     private void Update()
     {
-        AdjustAvatar();
-
         switch (state)
         {
             case "Pursue": Pursue();
@@ -52,6 +50,9 @@ public class EnemyNavigation : MonoBehaviour
 
     void Patrol()
     {
+        Vector2 nextPosition = goals[currentGoal].transform.position;
+
+        AdjustAvatar(nextPosition);
         if (waiting)
         {
             return;
@@ -66,6 +67,8 @@ public class EnemyNavigation : MonoBehaviour
 
     void Pursue()
     {
+        AdjustAvatar(player.transform.position);
+
         agent.destination = player.position;
     }
 
@@ -93,10 +96,9 @@ public class EnemyNavigation : MonoBehaviour
         agent.SetDestination(goals[currentGoal].transform.position);
     }
 
-    private void AdjustAvatar()
+    private void AdjustAvatar(Vector2 target)
     {
-        Vector2 nextPosition = goals[currentGoal].transform.position;
-        if (gameObject.transform.position.x < nextPosition.x)
+        if (gameObject.transform.position.x < target.x)
         {
             //Right
             AdjustRotation(1);
