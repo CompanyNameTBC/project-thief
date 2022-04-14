@@ -6,9 +6,10 @@ using System.Collections;
 
 public class EnemyNavigation : MonoBehaviour
 {
-    public NavMeshAgent navMeshAgent;
+    public NavMeshAgent agent;
     public Rigidbody2D rb;
 
+    public Transform player;
 
     public Transform goal;
     public Vector2 startingPosition;
@@ -27,9 +28,9 @@ public class EnemyNavigation : MonoBehaviour
         goals = GameObject.FindGameObjectsWithTag("enemy1Target");
         currentGoal = 0;
         startingPosition = rb.position;
-        navMeshAgent.updateRotation = false;
-        navMeshAgent.updateUpAxis = false;
-        navMeshAgent.destination = goals[currentGoal].transform.position;
+        agent.updateRotation = false;
+        agent.updateUpAxis = false;
+        agent.destination = goals[currentGoal].transform.position;
         waiting = false;
         state = "Patrol";
         reverse = false;
@@ -73,8 +74,8 @@ public class EnemyNavigation : MonoBehaviour
     }
 
     void Pursue()
-    { 
-
+    {
+        agent.destination = player.position;
     }
 
     IEnumerator Wait()
@@ -89,11 +90,11 @@ public class EnemyNavigation : MonoBehaviour
             {
                 reverse = false;
                 currentGoal = -1;
-                navMeshAgent.SetDestination(startingPosition);
+                agent.SetDestination(startingPosition);
             } else
             {
                 currentGoal -= 1;
-                navMeshAgent.SetDestination(goals[currentGoal].transform.position);
+                agent.SetDestination(goals[currentGoal].transform.position);
             }
 
         } else
@@ -103,12 +104,12 @@ public class EnemyNavigation : MonoBehaviour
                 reverse = true;
                 Debug.Log("Returning");
                 currentGoal -= 1;
-                navMeshAgent.SetDestination(goals[currentGoal].transform.position);
+                agent.SetDestination(goals[currentGoal].transform.position);
             }
             else
             {
                 currentGoal += 1;
-                navMeshAgent.SetDestination(goals[currentGoal].transform.position);
+                agent.SetDestination(goals[currentGoal].transform.position);
             }
         }
     }
@@ -125,7 +126,17 @@ public class EnemyNavigation : MonoBehaviour
         return dif < 1 && dif > -1;
     }
 
-    public void SetState(String newState)
+    public void ActivatePursuePlayer()
+    {
+        SetState("Pursue");
+    }
+
+    public void ActivatePatrol()
+    {
+        SetState("Patrol");
+    }
+
+    private void SetState(String newState)
     {
         state = newState;
     }
