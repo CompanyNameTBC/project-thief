@@ -2,20 +2,18 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
-
+using System.Linq;
 
 public class EnemyNavigation : MonoBehaviour
 {
     public NavMeshAgent agent;
     public Rigidbody2D rb;
-
     public Transform player;
 
-    public Transform goal;
     public Vector2 startingPosition;
     public int loiterTime;
 
-    private GameObject[] goals;
+    private Transform[] goals;
     private int currentGoal;
 
     private String state;
@@ -24,16 +22,21 @@ public class EnemyNavigation : MonoBehaviour
 
     // Start is called before the first frame update
     void Start() {
-        goals = GameObject.FindGameObjectsWithTag("enemy1Target");
+        // goals = GameObject.FindGameObjectsWithTag(tag);
+
+
+        Transform[] path = transform.parent.Find("Path").GetComponentsInChildren<Transform>();
+
+        goals = path.Where(child => child.CompareTag("target")).ToArray();
         currentGoal = 0;
-        startingPosition = rb.position;
+        startingPosition = getPosition();
 
         agent.updateRotation = false;
         agent.updateUpAxis = false;
-        agent.destination = goals[currentGoal].transform.position;
+        agent.destination = getTargetPosition();
 
         waiting = false;
-        state = "Pursue";
+        state = "Patrol";
         reverse = false;
     }
 
@@ -41,24 +44,24 @@ public class EnemyNavigation : MonoBehaviour
     {
         switch (state)
         {
-            case "Pursue": Pursue();
+            case "Pursue":
+                Pursue();
                 break;
-            default: Patrol();
+            default:
+                Patrol();
                 break;
         }
     }
 
     void Patrol()
     {
-        Vector2 nextPosition = goals[currentGoal].transform.position;
-
+        Vector2 nextPosition = getTargetPosition();
         AdjustAvatar(nextPosition);
         if (waiting)
         {
             return;
         }
-       Vector3 goal = goals[currentGoal].transform.position; 
-       if (CoordinatesMatch(rb.position, goal))
+       if (CoordinatesMatch(getPosition(), nextPosition))
        {
          waiting = true;
          StartCoroutine(LoiterAndSetNextDestination());
@@ -67,7 +70,7 @@ public class EnemyNavigation : MonoBehaviour
 
     void Pursue()
     {
-        AdjustAvatar(player.transform.position);
+        AdjustAvatar(player.position);
 
         agent.destination = player.position;
     }
@@ -93,12 +96,22 @@ public class EnemyNavigation : MonoBehaviour
 
         currentGoal = reverse ? currentGoal - 1 : currentGoal + 1;
 
-        agent.SetDestination(goals[currentGoal].transform.position);
+        agent.SetDestination(getTargetPosition());
+    }
+
+    private Vector2 getPosition()
+    {
+        return transform.localPosition;
+    }
+
+    private Vector2 getTargetPosition()
+    {
+        return goals[currentGoal].transform.localPosition;
     }
 
     private void AdjustAvatar(Vector2 target)
     {
-        if (gameObject.transform.position.x < target.x)
+        if (getPosition().x < target.x)
         {
             //Right
             AdjustRotation(1);
@@ -112,8 +125,7 @@ public class EnemyNavigation : MonoBehaviour
 
     private void AdjustRotation(int adjustment)
     {
-        Transform t = this.gameObject.transform;
-        t.localScale = new Vector3(
+        transform.localScale = new Vector3(
           adjustment,
           transform.localScale.y,
           transform.localScale.z);
