@@ -10,7 +10,6 @@ public class EnemyNavigation : MonoBehaviour
     public Rigidbody2D rb;
     public Transform player;
 
-    public Vector2 startingPosition;
     public int loiterTime;
 
     private Transform[] targetPath;
@@ -22,27 +21,23 @@ public class EnemyNavigation : MonoBehaviour
 
     // Start is called before the first frame update
     void Start() {
-        // goals = GameObject.FindGameObjectsWithTag(tag);
-
-
         targetPath = transform.parent.Find("Path")
             .GetComponentsInChildren<Transform>()
             .Where(child => child.CompareTag("target"))
             .ToArray();
 
         currentTarget = 0;
-        startingPosition = getCurrentPosition();
 
         agent.updateRotation = false;
         agent.updateUpAxis = false;
         agent.destination = getTargetPosition();
 
-        loitering = false;
         state = "Patrol";
         reverse = false;
+        loitering = false;
     }
 
-    private void Update()
+    void Update()
     {
         switch (state)
         {
@@ -54,6 +49,17 @@ public class EnemyNavigation : MonoBehaviour
                 break;
         }
     }
+
+    void ActivatePursuePlayer()
+    {
+        SetState("Pursue");
+    }
+
+    void ActivatePatrol()
+    {
+        SetState("Patrol");
+    }
+
 
     void Patrol()
     {
@@ -146,16 +152,6 @@ public class EnemyNavigation : MonoBehaviour
     {
         float dif = a - b;
         return dif < 1 && dif > -1;
-    }
-
-    public void ActivatePursuePlayer()
-    {
-        SetState("Pursue");
-    }
-
-    public void ActivatePatrol()
-    {
-        SetState("Patrol");
     }
 
     private void SetState(String newState)
