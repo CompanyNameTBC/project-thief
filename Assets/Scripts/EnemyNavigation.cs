@@ -13,11 +13,11 @@ public class EnemyNavigation : MonoBehaviour
     public Vector2 startingPosition;
     public int loiterTime;
 
-    private Transform[] goals;
-    private int currentGoal;
+    private Transform[] targetPath;
+    private int currentTarget;
 
     private String state;
-    private bool waiting;
+    private bool loitering;
     private bool reverse;
 
     // Start is called before the first frame update
@@ -25,17 +25,19 @@ public class EnemyNavigation : MonoBehaviour
         // goals = GameObject.FindGameObjectsWithTag(tag);
 
 
-        Transform[] path = transform.parent.Find("Path").GetComponentsInChildren<Transform>();
+        targetPath = transform.parent.Find("Path")
+            .GetComponentsInChildren<Transform>()
+            .Where(child => child.CompareTag("target"))
+            .ToArray();
 
-        goals = path.Where(child => child.CompareTag("target")).ToArray();
-        currentGoal = 0;
-        startingPosition = getPosition();
+        currentTarget = 0;
+        startingPosition = getCurrentPosition();
 
         agent.updateRotation = false;
         agent.updateUpAxis = false;
         agent.destination = getTargetPosition();
 
-        waiting = false;
+        loitering = false;
         state = "Patrol";
         reverse = false;
     }
@@ -55,22 +57,25 @@ public class EnemyNavigation : MonoBehaviour
 
     void Patrol()
     {
-        Vector2 nextPosition = getTargetPosition();
-        AdjustAvatar(nextPosition);
-        if (waiting)
+        if (loitering)
         {
             return;
         }
-       if (CoordinatesMatch(getPosition(), nextPosition))
+
+        Vector2 targetPosition = getTargetPosition();
+
+        FaceTarget(targetPosition);
+
+       if (CoordinatesMatch(getCurrentPosition(), targetPosition))
        {
-         waiting = true;
-         StartCoroutine(LoiterAndSetNextDestination());
+           loitering = true;
+           StartCoroutine(LoiterAndSetNextDestination());
        }  
     }
 
     void Pursue()
     {
-        AdjustAvatar(player.position);
+        FaceTarget(player.position);
 
         agent.destination = player.position;
     }
@@ -78,40 +83,40 @@ public class EnemyNavigation : MonoBehaviour
     IEnumerator LoiterAndSetNextDestination()
     {
         yield return new WaitForSeconds(loiterTime);
-        waiting = false;
+        loitering = false;
 
         if (reverse)
         {
-            if(currentGoal == 0)
+            if(currentTarget == 0)
             {
                 reverse = false;
             } 
         } else
         {
-            if (currentGoal == goals.Length -1)
+            if (currentTarget == targetPath.Length -1)
             {
                 reverse = true;
             }
         }
 
-        currentGoal = reverse ? currentGoal - 1 : currentGoal + 1;
+        currentTarget = reverse ? currentTarget - 1 : currentTarget + 1;
 
         agent.SetDestination(getTargetPosition());
     }
 
-    private Vector2 getPosition()
+    private Vector2 getCurrentPosition()
     {
         return transform.localPosition;
     }
 
     private Vector2 getTargetPosition()
     {
-        return goals[currentGoal].transform.localPosition;
+        return targetPath[currentTarget].transform.localPosition;
     }
 
-    private void AdjustAvatar(Vector2 target)
+    private void FaceTarget(Vector2 target)
     {
-        if (getPosition().x < target.x)
+        if (getCurrentPosition().x < target.x)
         {
             //Right
             AdjustRotation(1);
