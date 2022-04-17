@@ -5,11 +5,12 @@ using UnityEngine;
 public class FieldOfView : MonoBehaviour
 {
     [SerializeField]
-    private LayerMask layerMask; // FOV is blocked by objects on this layer
+    private LayerMask opaqueLayer; // FOV is blocked by objects on this layer
     private Mesh mesh;
     private Vector3 origin;
     private float fov;
     private float startingAngle;
+    private float viewDistance;
 
     // Start is called before the first frame update
     void Start()
@@ -18,8 +19,9 @@ public class FieldOfView : MonoBehaviour
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
         origin = Vector3.zero;
-        fov = 90f;
         startingAngle = 0f;
+        //fov = 90f;
+        //viewDistance = 10f;
     }
 
     // Update is called once per frame
@@ -28,7 +30,6 @@ public class FieldOfView : MonoBehaviour
         int rayCount = 50;
         float angle = startingAngle;
         float angleIncrease = fov / rayCount;
-        float viewDistance = 10f;
 
         Vector3[] vertices = new Vector3[rayCount + 2];
         Vector2[] uv = new Vector2[vertices.Length];
@@ -40,7 +41,7 @@ public class FieldOfView : MonoBehaviour
         for (int i = 0; i <= rayCount; i++)
         {
             Vector3 vertex = origin + GetVectorFromAngle(angle * viewDistance);
-            RaycastHit2D raycastHit2D = Physics2D.Raycast(origin, GetVectorFromAngle(angle), viewDistance, layerMask);
+            RaycastHit2D raycastHit2D = Physics2D.Raycast(origin, GetVectorFromAngle(angle), viewDistance, opaqueLayer);
             if (raycastHit2D.collider == null)
             {
                 // No hit
@@ -75,6 +76,26 @@ public class FieldOfView : MonoBehaviour
         mesh.triangles = triangles;
     }
 
+    public void SetOrigin(Vector3 origin)
+    {
+        this.origin = origin;
+    }
+
+    public void SetAimDirection(Vector3 aimDirection)
+    {
+        startingAngle = GetAngleFromVectorFloat(aimDirection); //- fov/2f; <-- Puts the stating angle to the middle of the fov (supposedly)
+    }
+
+    public void SetFOV(float fov)
+    {
+        this.fov = fov;
+    }
+
+    public void SetViewDistance(float viewDistance)
+    {
+        this.viewDistance = viewDistance;
+    }
+
     private Vector3 GetVectorFromAngle(float angle)
     {
         float angleRad = angle * (Mathf.PI / 180f);
@@ -88,15 +109,5 @@ public class FieldOfView : MonoBehaviour
         if (n < 0) n += 360;
 
         return n;
-    }
-
-    public void SetOrigin(Vector3 origin)
-    {
-        this.origin = origin;
-    }
-
-    public void SetAimDirection(Vector3 aimDirection)
-    {
-        startingAngle = GetAngleFromVectorFloat(aimDirection) - fov/2f; // Puts the stating angle to the middle of the fov
     }
 }
