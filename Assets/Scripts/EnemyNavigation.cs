@@ -180,12 +180,12 @@ public class EnemyNavigation : MonoBehaviour
         // TODO
         // Needs a Vector3 represents the way the enemy is facing, according to tutorial
         Vector3 aimDirection = Vector3.forward; // placeholder for the above
-        if (Vector3.Distance(getCurrentPosition(), player.localPosition) < viewDistance)
+        if (Vector2.Distance(getCurrentPosition(), player.localPosition) < viewDistance)
         {
             // Player is inside the view distance
 
-            Vector3 directionToPlayer = (player.localPosition - transform.localPosition).normalized;
-            if (Vector3.Angle(aimDirection, directionToPlayer) < fov/2f)
+            Vector2 directionToPlayer = (player.localPosition - transform.localPosition).normalized;
+            if (Vector2.Angle(aimDirection, directionToPlayer) < fov/2f)
             {
                 // Player is inside the field of view
 
@@ -193,7 +193,7 @@ public class EnemyNavigation : MonoBehaviour
                 if (raycastHit2D.collider != null)
                 {
                     // Hit something/can see something
-                    if (raycastHit2D.collider.gameObject.GetComponent("player") != null) // probably doesn't work. How do I check that the collider hit the player?
+                    if (raycastHit2D.collider.gameObject.name.Equals("Player"))
                     {
                         // Hit player
                         ActivatePursuePlayer();
