@@ -86,8 +86,6 @@ public class EnemyNavigation : MonoBehaviour
 
         currentTarget = currentTarget >= ( targetPath.Length - 1 ) ? 0 : currentTarget + 1;
 
-        Debug.Log(currentTarget);
-
         agent.SetDestination(getTargetPosition());
         
         ActivatePatrol();
