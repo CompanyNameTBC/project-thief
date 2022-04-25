@@ -15,7 +15,7 @@ public class EnemyNavigation : MonoBehaviour
     private Transform[] targetPath;
     private int currentTarget;
 
-    private String state;
+    private EnemyState enemyState;
 
     // Start is called before the first frame update
     void Start() {
@@ -27,17 +27,17 @@ public class EnemyNavigation : MonoBehaviour
         agent.updateUpAxis = false;
         agent.destination = getTargetPosition();
 
-        state = "Patrol";
+        enemyState = EnemyState.Patrol;
     }
 
     void Update()
     {
-        switch (state)
+        switch (enemyState)
         {
-            case "Pursue":
+            case EnemyState.Pursue:
                 Pursue();
                 break;
-            case "Patrol":
+            case EnemyState.Patrol:
                 Patrol();
                 break;
             default:
@@ -47,20 +47,20 @@ public class EnemyNavigation : MonoBehaviour
 
     void ActivatePursuePlayer()
     {
-        SetState("Pursue");
+        SetEnemyState(EnemyState.Pursue);
     }
 
     void ActivatePatrol()
     {
-        SetState("Patrol");
+        SetEnemyState(EnemyState.Patrol);
     }
 
     void ActivateLoiter(){
-        SetState("Loiter");
+        SetEnemyState(EnemyState.Loiter);
     }
 
 
-    void Patrol()
+    private void Patrol()
     {
         Vector2 targetPosition = getTargetPosition();
 
@@ -73,14 +73,14 @@ public class EnemyNavigation : MonoBehaviour
        }  
     }
 
-    void Pursue()
+    private void Pursue()
     {
         FaceTarget(player.position);
 
         agent.destination = player.position;
     }
 
-    IEnumerator LoiterAndSetNextDestination()
+    private IEnumerator LoiterAndSetNextDestination()
     {
         yield return new WaitForSeconds(loiterTime);
 
@@ -125,10 +125,7 @@ public class EnemyNavigation : MonoBehaviour
 
     private void AdjustRotation(int adjustment)
     {
-        transform.localScale = new Vector3(
-          adjustment,
-          transform.localScale.y,
-          transform.localScale.z);
+        transform.localScale = new Vector3(adjustment, transform.localScale.y, transform.localScale.z);
     }
 
     private Boolean CoordinatesMatch(Vector2 vectorA, Vector2 vectorB)
@@ -143,8 +140,8 @@ public class EnemyNavigation : MonoBehaviour
         return dif < 1 && dif > -1;
     }
 
-    private void SetState(String newState)
+    private void SetEnemyState(EnemyState newState)
     {
-        state = newState;
+        enemyState = newState;
     }
 }
