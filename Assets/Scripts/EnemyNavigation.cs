@@ -16,15 +16,10 @@ public class EnemyNavigation : MonoBehaviour
     private int currentTarget;
 
     private String state;
-    private bool loitering;
-    private bool reverse;
 
     // Start is called before the first frame update
     void Start() {
-        targetPath = transform.parent.Find("Path")
-            .GetComponentsInChildren<Transform>()
-            .Where(child => child.CompareTag("target"))
-            .ToArray();
+        targetPath = getTargetPath();
 
         currentTarget = 0;
 
@@ -33,8 +28,6 @@ public class EnemyNavigation : MonoBehaviour
         agent.destination = getTargetPosition();
 
         state = "Patrol";
-        reverse = false;
-        loitering = false;
     }
 
     void Update()
@@ -44,8 +37,10 @@ public class EnemyNavigation : MonoBehaviour
             case "Pursue":
                 Pursue();
                 break;
-            default:
+            case "Patrol":
                 Patrol();
+                break;
+            default:
                 break;
         }
     }
@@ -60,21 +55,20 @@ public class EnemyNavigation : MonoBehaviour
         SetState("Patrol");
     }
 
+    void ActivateLoiter(){
+        SetState("Loiter");
+    }
+
 
     void Patrol()
     {
-        if (loitering)
-        {
-            return;
-        }
-
         Vector2 targetPosition = getTargetPosition();
 
         FaceTarget(targetPosition);
 
        if (CoordinatesMatch(getCurrentPosition(), targetPosition))
        {
-           loitering = true;
+           ActivateLoiter();
            StartCoroutine(LoiterAndSetNextDestination());
        }  
     }
@@ -89,25 +83,22 @@ public class EnemyNavigation : MonoBehaviour
     IEnumerator LoiterAndSetNextDestination()
     {
         yield return new WaitForSeconds(loiterTime);
-        loitering = false;
 
-        if (reverse)
-        {
-            if(currentTarget == 0)
-            {
-                reverse = false;
-            } 
-        } else
-        {
-            if (currentTarget == targetPath.Length -1)
-            {
-                reverse = true;
-            }
-        }
+        currentTarget = currentTarget >= ( targetPath.Length - 1 ) ? 0 : currentTarget + 1;
 
-        currentTarget = reverse ? currentTarget - 1 : currentTarget + 1;
+        Debug.Log(currentTarget);
 
         agent.SetDestination(getTargetPosition());
+        
+        ActivatePatrol();
+    }
+
+
+    private Transform[] getTargetPath() {
+        return transform.parent.Find("Path")
+            .GetComponentsInChildren<Transform>()
+            .Where(child => child.CompareTag("target"))
+            .ToArray();
     }
 
     private Vector2 getCurrentPosition()
