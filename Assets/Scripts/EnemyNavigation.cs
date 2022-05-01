@@ -15,9 +15,7 @@ public class EnemyNavigation : MonoBehaviour
     private Transform[] targetPath;
     private int currentTarget;
 
-    private String state;
-    private bool loitering;
-    private bool reverse;
+    private EnemyState enemyState;
 
     [SerializeField] private Transform pfFieldOfView;
     private FieldOfView fieldOfView;
@@ -26,10 +24,7 @@ public class EnemyNavigation : MonoBehaviour
 
     // Start is called before the first frame update
     void Start() {
-        targetPath = transform.parent.Find("Path")
-            .GetComponentsInChildren<Transform>()
-            .Where(child => child.CompareTag("target"))
-            .ToArray();
+        targetPath = getTargetPath();
 
         currentTarget = 0;
 
@@ -37,9 +32,7 @@ public class EnemyNavigation : MonoBehaviour
         agent.updateUpAxis = false;
         agent.destination = getTargetPosition();
 
-        state = "Patrol";
-        reverse = false;
-        loitering = false;
+        enemyState = EnemyState.Patrol;
 
         fieldOfView = Instantiate(pfFieldOfView, null).GetComponent<FieldOfView>();
         fieldOfView.SetFOV(fov);
@@ -48,14 +41,16 @@ public class EnemyNavigation : MonoBehaviour
 
     void Update()
     {
-        switch (state)
+        switch (enemyState)
         {
-            case "Pursue":
+            case EnemyState.Pursue:
                 Pursue();
                 break;
-            default:
+            case EnemyState.Patrol:
                 Patrol();
                 FindTargetPlayer();
+                break;
+            default:
                 break;
         }
 
@@ -68,62 +63,56 @@ public class EnemyNavigation : MonoBehaviour
 
     void ActivatePursuePlayer()
     {
-        SetState("Pursue");
+        SetEnemyState(EnemyState.Pursue);
     }
 
     void ActivatePatrol()
     {
-        SetState("Patrol");
+        SetEnemyState(EnemyState.Patrol);
+    }
+
+    void ActivateLoiter(){
+        SetEnemyState(EnemyState.Loiter);
     }
 
 
-    void Patrol()
+    private void Patrol()
     {
-        if (loitering)
-        {
-            return;
-        }
-
         Vector2 targetPosition = getTargetPosition();
 
         FaceTarget(targetPosition);
 
        if (CoordinatesMatch(getCurrentPosition(), targetPosition))
        {
-           loitering = true;
+           ActivateLoiter();
            StartCoroutine(LoiterAndSetNextDestination());
        }  
     }
 
-    void Pursue()
+    private void Pursue()
     {
         FaceTarget(player.position);
 
         agent.destination = player.position;
     }
 
-    IEnumerator LoiterAndSetNextDestination()
+    private IEnumerator LoiterAndSetNextDestination()
     {
         yield return new WaitForSeconds(loiterTime);
-        loitering = false;
 
-        if (reverse)
-        {
-            if(currentTarget == 0)
-            {
-                reverse = false;
-            } 
-        } else
-        {
-            if (currentTarget == targetPath.Length -1)
-            {
-                reverse = true;
-            }
-        }
-
-        currentTarget = reverse ? currentTarget - 1 : currentTarget + 1;
+        currentTarget = currentTarget >= ( targetPath.Length - 1 ) ? 0 : currentTarget + 1;
 
         agent.SetDestination(getTargetPosition());
+        
+        ActivatePatrol();
+    }
+
+
+    private Transform[] getTargetPath() {
+        return transform.parent.Find("Path")
+            .GetComponentsInChildren<Transform>()
+            .Where(child => child.CompareTag("target"))
+            .ToArray();
     }
 
     private Vector2 getCurrentPosition()
@@ -152,10 +141,7 @@ public class EnemyNavigation : MonoBehaviour
 
     private void AdjustRotation(int adjustment)
     {
-        transform.localScale = new Vector3(
-          adjustment,
-          transform.localScale.y,
-          transform.localScale.z);
+        transform.localScale = new Vector3(adjustment, transform.localScale.y, transform.localScale.z);
     }
 
     private Boolean CoordinatesMatch(Vector2 vectorA, Vector2 vectorB)
@@ -170,9 +156,9 @@ public class EnemyNavigation : MonoBehaviour
         return dif < 1 && dif > -1;
     }
 
-    private void SetState(String newState)
+    private void SetEnemyState(EnemyState newState)
     {
-        state = newState;
+        enemyState = newState;
     }
 
     private void FindTargetPlayer()
