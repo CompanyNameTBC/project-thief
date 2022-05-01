@@ -21,6 +21,7 @@ public class EnemyNavigation : MonoBehaviour
     private FieldOfView fieldOfView;
     [SerializeField] private float fov;
     [SerializeField] private float viewDistance;
+    private float attackDistanceFraction;
 
     // Start is called before the first frame update
     void Start() {
@@ -34,9 +35,13 @@ public class EnemyNavigation : MonoBehaviour
 
         enemyState = EnemyState.Patrol;
 
+        // Initialize the FieldOfView prefab and set the fov angle and view distance
         fieldOfView = Instantiate(pfFieldOfView, null).GetComponent<FieldOfView>();
         fieldOfView.SetFOV(fov);
         fieldOfView.SetViewDistance(viewDistance);
+
+        // Set the enemy attack distance as a percentage of the viewDistance
+        attackDistanceFraction = 0.5f;
     }
 
     void Update()
@@ -48,7 +53,6 @@ public class EnemyNavigation : MonoBehaviour
                 break;
             case EnemyState.Patrol:
                 Patrol();
-                FindTargetPlayer();
                 break;
             default:
                 break;
@@ -58,6 +62,7 @@ public class EnemyNavigation : MonoBehaviour
         {
             fieldOfView.SetOrigin(getCurrentPosition());
             fieldOfView.SetAimDirection(transform.localScale);
+            FindTargetPlayer();
         }
     }
 
@@ -182,14 +187,21 @@ public class EnemyNavigation : MonoBehaviour
                     if (raycastHit2D.collider.gameObject.name.Equals("Player"))
                     {
                         // Hit player
+
                         ActivatePursuePlayer();
-                        Debug.Log("PLAYER HIT");
+                        // TODO: pursue player's last know position within the field of view, not their current position
+                        // While pursuing, check if they ahve reached the last known position, loiter then resume regular patrol.
+                        
+                        if (Vector2.Distance(getCurrentPosition(), player.localPosition) < (viewDistance * attackDistanceFraction))
+                        {
+                            Debug.Log("PLAYER ATTACKED");
+                        }
                     }
                     else
                     {
                         // Hit something else
                         ActivatePatrol();
-                        Debug.Log("NOTHING");
+                        //Debug.Log("NOTHING");
                     }
                 }
             }
