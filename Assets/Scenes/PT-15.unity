@@ -3543,7 +3543,7 @@ MonoBehaviour:
   player: {fileID: 1479528360}
   loiterTime: 1
   pfFieldOfView: {fileID: 7795470014908555333, guid: a6ac224d6f320d34e97b26a716d91826, type: 3}
-  fov: 100
+  fov: 75
   viewDistance: 4
 --- !u!50 &1519147107
 Rigidbody2D:

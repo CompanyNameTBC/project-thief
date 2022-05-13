@@ -17,11 +17,14 @@ public class EnemyNavigation : MonoBehaviour
 
     private EnemyState enemyState;
 
+    // Field of View variables
     [SerializeField] private Transform pfFieldOfView;
     private FieldOfView fieldOfView;
     [SerializeField] private float fov;
     [SerializeField] private float viewDistance;
     private float attackDistanceFraction;
+
+    private Vector2 playerLastKnownPosition;
 
     // Start is called before the first frame update
     void Start() {
@@ -42,6 +45,8 @@ public class EnemyNavigation : MonoBehaviour
 
         // Set the enemy attack distance as a percentage of the viewDistance
         attackDistanceFraction = 0.5f;
+
+        playerLastKnownPosition = player.position;
     }
 
     void Update()
@@ -96,9 +101,16 @@ public class EnemyNavigation : MonoBehaviour
 
     private void Pursue()
     {
-        FaceTarget(player.position);
+        FaceTarget(playerLastKnownPosition);
 
-        agent.destination = player.position;
+        agent.destination = playerLastKnownPosition;
+
+        // If the enemy has reached the player's last known position, loiter then continue patrol
+        if (CoordinatesMatch(getCurrentPosition(), playerLastKnownPosition))
+        {
+            ActivateLoiter();
+            StartCoroutine(LoiterAndSetNextDestination());
+        }
     }
 
     private IEnumerator LoiterAndSetNextDestination()
@@ -187,10 +199,9 @@ public class EnemyNavigation : MonoBehaviour
                     if (raycastHit2D.collider.gameObject.name.Equals("Player"))
                     {
                         // Hit player
-
+                        // Go to the player's last known position
+                        playerLastKnownPosition = player.position;
                         ActivatePursuePlayer();
-                        // TODO: pursue player's last know position within the field of view, not their current position
-                        // While pursuing, check if they ahve reached the last known position, loiter then resume regular patrol.
                         
                         if (Vector2.Distance(getCurrentPosition(), player.localPosition) < (viewDistance * attackDistanceFraction))
                         {
