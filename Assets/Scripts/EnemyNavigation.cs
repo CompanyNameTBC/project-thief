@@ -26,6 +26,9 @@ public class EnemyNavigation : MonoBehaviour
 
     private Vector2 playerLastKnownPosition;
 
+    private Vector3 previousPosition;
+    private Vector3 currentDirection;
+
     // Start is called before the first frame update
     void Start() {
         targetPath = getTargetPath();
@@ -47,6 +50,9 @@ public class EnemyNavigation : MonoBehaviour
         attackDistanceFraction = 0.5f;
 
         playerLastKnownPosition = player.position;
+
+        previousPosition = transform.position;
+        currentDirection = Vector3.up;
     }
 
     void Update()
@@ -65,8 +71,15 @@ public class EnemyNavigation : MonoBehaviour
 
         if (fieldOfView != null)
         {
+            // calculate the current direciton of the enemy
+            if (previousPosition != transform.position)
+            {
+                currentDirection = (previousPosition - transform.position).normalized;
+                previousPosition = transform.position;
+            }
+
             fieldOfView.SetOrigin(getCurrentPosition());
-            fieldOfView.SetAimDirection(transform.localScale);
+            fieldOfView.SetAimDirection(currentDirection);
             FindTargetPlayer();
         }
     }
@@ -181,8 +194,8 @@ public class EnemyNavigation : MonoBehaviour
     private void FindTargetPlayer()
     {
         // TODO
-        // Needs a Vector3 represents the way the enemy is facing, according to tutorial
-        Vector3 aimDirection = Vector3.forward; // placeholder for the above
+        // Needs a Vector3 to represent the direction the enemy is facing, according to tutorial
+        Vector3 aimDirection = currentDirection; // Not sure if this works
         if (Vector2.Distance(getCurrentPosition(), player.localPosition) < viewDistance)
         {
             // Player is inside the view distance
@@ -198,6 +211,7 @@ public class EnemyNavigation : MonoBehaviour
                     // Hit something/can see something
                     if (raycastHit2D.collider.gameObject.name.Equals("Player"))
                     {
+                        Debug.Log("PLAYER SEEN");
                         // Hit player
                         // Go to the player's last known position
                         playerLastKnownPosition = player.position;
